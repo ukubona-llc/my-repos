@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ukubona LLC — Repo Navigator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Spectral:ital,wght@0,300;0,400;1,300&display=swap');
+
+  :root {
+    --bg:       #05080f;
+    --surface:  #0c1220;
+    --border:   #1a2540;
+    --muted:    #2d3d5c;
+    --text:     #c8d4e8;
+    --dim:      #607090;
+    --white:    #eef2f8;
+    --green:    #34d399;
+    --amber:    #f59e0b;
+    --blue:     #38bdf8;
+    --red:      #f87171;
+    --violet:   #a78bfa;
+
+    /* cluster colours */
+    --c1: #34d399; /* health */
+    --c2: #38bdf8; /* npa */
+    --c3: #f59e0b; /* conceptual */
+    --c4: #a78bfa; /* infra */
+    --c5: #607090; /* meta */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Spectral', Georgia, serif;
+    min-height: 100vh;
+  }
+
+  /* grain */
+  body::before {
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity:.5;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position:relative; z-index:10;
+    padding: 40px 48px 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .logo {
+    font-family:'DM Serif Display', serif;
+    font-size:13px; letter-spacing:.18em;
+    color: var(--green); text-transform:uppercase;
+  }
+  .logo span { color: var(--dim); }
+  .theta {
+    font-family:'DM Mono', monospace;
+    font-size:11px; color:var(--dim); letter-spacing:.08em;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position:relative; z-index:10;
+    padding: 44px 48px 8px;
+  }
+  .hero h1 {
+    font-family:'DM Serif Display', serif;
+    font-size: clamp(28px,4vw,44px);
+    line-height:1.1; color:var(--white);
+    margin-bottom:12px;
+  }
+  .hero h1 em { color:var(--green); font-style:italic; }
+  .hero p {
+    font-size:14px; font-weight:300; line-height:1.7;
+    color:var(--dim); max-width:680px;
+  }
+  .hero p strong { color:var(--text); font-weight:400; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    position:relative; z-index:10;
+    padding: 28px 48px 4px;
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+  }
+  .filter-btn {
+    font-family:'DM Mono', monospace;
+    font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+    padding:5px 12px; border-radius:2px; cursor:pointer;
+    border:1px solid var(--border); background:var(--surface);
+    color:var(--dim); transition: all .2s;
+  }
+  .filter-btn:hover { border-color:var(--green); color:var(--green); }
+  .filter-btn.active { background:var(--green); color:var(--bg); border-color:var(--green); }
+  .filter-btn[data-c="2"].active { background:var(--c2); border-color:var(--c2); }
+  .filter-btn[data-c="3"].active { background:var(--c3); border-color:var(--c3); color:var(--bg); }
+  .filter-btn[data-c="4"].active { background:var(--c4); border-color:var(--c4); color:var(--bg); }
+  .filter-btn[data-c="5"].active { background:var(--c5); border-color:var(--c5); }
+
+  .search-wrap {
+    margin-left:auto;
+    position:relative;
+  }
+  .search-wrap input {
+    font-family:'DM Mono', monospace; font-size:11px;
+    background:var(--surface); border:1px solid var(--border);
+    color:var(--text); padding:5px 14px 5px 28px;
+    border-radius:2px; width:200px; outline:none;
+    transition:border .2s;
+  }
+  .search-wrap input:focus { border-color:var(--green); }
+  .search-wrap::before {
+    content:'⌕'; position:absolute; left:8px; top:4px;
+    color:var(--dim); font-size:13px; pointer-events:none;
+  }
+
+  /* ── SECTION LABEL ── */
+  .slabel {
+    position:relative; z-index:10;
+    padding: 32px 48px 10px;
+    font-family:'DM Mono', monospace;
+    font-size:10px; letter-spacing:.22em; color:var(--muted);
+    text-transform:uppercase;
+  }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    position:relative; z-index:10;
+    padding: 0 48px;
+    overflow-x:auto;
+  }
+  table {
+    width:100%; border-collapse:collapse;
+    font-size:13px;
+  }
+  thead th {
+    font-family:'DM Mono', monospace;
+    font-size:9px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--dim); text-align:left;
+    padding:8px 12px 8px 0;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  tbody tr {
+    border-bottom:1px solid var(--border);
+    transition:background .15s;
+    cursor:pointer;
+  }
+  tbody tr:hover { background:rgba(52,211,153,.04); }
+  tbody tr.hidden { display:none; }
+
+  td {
+    padding:11px 12px 11px 0;
+    vertical-align:top; line-height:1.5;
+  }
+  td.num {
+    font-family:'DM Mono',monospace; font-size:11px;
+    color:var(--muted); width:28px;
+  }
+  td.name a {
+    font-family:'DM Mono',monospace; font-size:12px;
+    color:var(--green); text-decoration:none;
+    letter-spacing:.04em;
+    transition:color .15s;
+  }
+  td.name a:hover { color:var(--white); text-decoration:underline; }
+  td.name .slug {
+    display:block; font-size:10px; color:var(--muted); margin-top:2px;
+  }
+  td.lang {
+    font-family:'DM Mono',monospace; font-size:10px;
+    color:var(--dim); white-space:nowrap;
+  }
+  td.updated {
+    font-family:'DM Mono',monospace; font-size:10px;
+    color:var(--dim); white-space:nowrap;
+  }
+  td.cluster { white-space:nowrap; }
+  .badge {
+    font-family:'DM Mono',monospace; font-size:9px;
+    letter-spacing:.1em; text-transform:uppercase;
+    padding:2px 7px; border-radius:2px;
+    display:inline-block;
+  }
+  .b1 { background:rgba(52,211,153,.12); color:var(--c1); border:1px solid rgba(52,211,153,.2); }
+  .b2 { background:rgba(56,189,248,.1);  color:var(--c2); border:1px solid rgba(56,189,248,.2); }
+  .b3 { background:rgba(245,158,11,.1);  color:var(--c3); border:1px solid rgba(245,158,11,.2); }
+  .b4 { background:rgba(167,139,250,.1); color:var(--c4); border:1px solid rgba(167,139,250,.2); }
+  .b5 { background:rgba(96,112,144,.1);  color:var(--c5); border:1px solid rgba(96,112,144,.2); }
+
+  td.notes { color:var(--dim); font-size:12.5px; font-style:italic; }
+
+  /* ── INSIGHT PANELS ── */
+  .insights {
+    position:relative; z-index:10;
+    padding:40px 48px;
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap:16px;
+  }
+  .insight-card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    padding:20px 22px;
+    border-radius:4px;
+  }
+  .insight-card h3 {
+    font-family:'DM Mono',monospace;
+    font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--dim); margin-bottom:10px;
+  }
+  .insight-card p {
+    font-size:13px; font-weight:300; line-height:1.65;
+    color:var(--text);
+  }
+  .insight-card p strong { color:var(--white); font-weight:400; }
+  .insight-card p em { color:var(--green); font-style:italic; }
+  .insight-card.highlight { border-color:var(--green); }
+
+  /* cluster legend */
+  .cluster-legend {
+    position:relative; z-index:10;
+    padding:0 48px 8px;
+    display:flex; gap:20px; flex-wrap:wrap;
+  }
+  .cl-item {
+    font-family:'DM Mono',monospace; font-size:10px;
+    display:flex; align-items:center; gap:6px;
+    color:var(--dim); letter-spacing:.08em;
+  }
+  .cl-dot {
+    width:8px; height:8px; border-radius:50%;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    position:relative; z-index:10;
+    padding:20px 48px;
+    border-top:1px solid var(--border);
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:12px;
+    margin-top:24px;
+  }
+  footer .fl { font-family:'DM Serif Display',serif; font-size:13px; color:var(--dim); }
+  footer .fl em { color:var(--green); font-style:normal; }
+  footer .fr { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:.12em; }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(14px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .hero, .filter-bar, .table-wrap, .insights { animation:fadeUp .7s ease both; }
+  .filter-bar   { animation-delay:.1s; }
+  .table-wrap   { animation-delay:.2s; }
+  .insights     { animation-delay:.35s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Ukubona LLC <span>· Repo Navigator</span></div>
+  <div class="theta">θ → L(θ) → ∇L → −η∇L → θ′</div>
+</header>
+
+<div class="hero">
+  <h1>34 public repos.<br/><em>One operating system.</em></h1>
+  <p>
+    Every repository below is live at
+    <strong>https://ukubona-llc.github.io/[repo]</strong>.
+    Click any name to open it. Filter by cluster. Search by keyword.
+    The observations below are preserved from the first clean structural read of the ecosystem.
+  </p>
+</div>
+
+<!-- ── FILTER ── -->
+<div class="filter-bar">
+  <button class="filter-btn active" data-c="0" onclick="filter(0)">All · 34</button>
+  <button class="filter-btn" data-c="1" onclick="filter(1)">🧬 Health + Clinical</button>
+  <button class="filter-btn" data-c="2" onclick="filter(2)">🏛️ NPA / Policy</button>
+  <button class="filter-btn" data-c="3" onclick="filter(3)">📖 Conceptual / Narrative</button>
+  <button class="filter-btn" data-c="4" onclick="filter(4)">⚙️ Infra / Twin / Ops</button>
+  <button class="filter-btn" data-c="5" onclick="filter(5)">🔬 Meta / Experimental</button>
+  <div class="search-wrap">
+    <input type="text" id="search" placeholder="search repos..." oninput="searchRepos()"/>
+  </div>
+</div>
+
+<!-- ── CLUSTER LEGEND ── -->
+<div class="cluster-legend">
+  <div class="cl-item"><div class="cl-dot" style="background:var(--c1)"></div>Health + Clinical</div>
+  <div class="cl-item"><div class="cl-dot" style="background:var(--c2)"></div>NPA / Policy</div>
+  <div class="cl-item"><div class="cl-dot" style="background:var(--c3)"></div>Conceptual / Narrative</div>
+  <div class="cl-item"><div class="cl-dot" style="background:var(--c4)"></div>Infra / Twin / Ops</div>
+  <div class="cl-item"><div class="cl-dot" style="background:var(--c5)"></div>Meta / Experimental</div>
+</div>
+
+<div class="slabel">Public Repositories · ukubona-llc.github.io</div>
+
+<!-- ── TABLE ── -->
+<div class="table-wrap">
+<table id="repo-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Repository</th>
+      <th>Lang</th>
+      <th>Updated</th>
+      <th>Cluster</th>
+      <th>Notes / Theme</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- c1 = Health, c2 = NPA, c3 = Conceptual, c4 = Infra, c5 = Meta -->
+
+    <tr data-c="1" data-name="hmis">
+      <td class="num">1</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/hmis" target="_blank">hmis</a>
+        <span class="slug">ukubona-llc.github.io/hmis</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">14 min ago</td>
+      <td class="cluster"><span class="badge b1">Health</span></td>
+      <td class="notes">Health Management Information System — the live spine</td>
+    </tr>
+
+    <tr data-c="4" data-name="constitution">
+      <td class="num">2</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/constitution" target="_blank">constitution</a>
+        <span class="slug">ukubona-llc.github.io/constitution</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">7 hrs ago</td>
+      <td class="cluster"><span class="badge b4">Infra</span></td>
+      <td class="notes">Governance / legal — the OS charter</td>
+    </tr>
+
+    <tr data-c="4" data-name="rare-impact-fund">
+      <td class="num">3</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/rare-impact-fund" target="_blank">rare-impact-fund</a>
+        <span class="slug">ukubona-llc.github.io/rare-impact-fund</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">14 hrs ago</td>
+      <td class="cluster"><span class="badge b4">Infra</span></td>
+      <td class="notes">Impact finance — revenue + sustainability layer</td>
+    </tr>
+
+    <tr data-c="4" data-name="ops-geo">
+      <td class="num">4</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/ops-geo" target="_blank">ops-geo</a>
+        <span class="slug">ukubona-llc.github.io/ops-geo</span>
+      </td>
+      <td class="lang">Shell</td>
+      <td class="updated">16 hrs ago</td>
+      <td class="cluster"><span class="badge b4">Infra</span></td>
+      <td class="notes">Geo / operations — the one Shell repo; execution layer</td>
+    </tr>
+
+    <tr data-c="1" data-name="ckd">
+      <td class="num">5</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/ckd" target="_blank">ckd</a>
+        <span class="slug">ukubona-llc.github.io/ckd</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">17 hrs ago</td>
+      <td class="cluster"><span class="badge b1">Health</span></td>
+      <td class="notes">Chronic kidney disease — clinical twin substrate</td>
+    </tr>
+
+    <tr data-c="2" data-name="npa-05">
+      <td class="num">6</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/npa-05" target="_blank">npa-05</a>
+        <span class="slug">ukubona-llc.github.io/npa-05</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">yesterday</td>
+      <td class="cluster"><span class="badge b2">NPA</span></td>
+      <td class="notes">NPA series — latest iteration</td>
+    </tr>
+
+    <tr data-c="2" data-name="npa-04">
+      <td class="num">7</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/npa-04" target="_blank">npa-04</a>
+        <span class="slug">ukubona-llc.github.io/npa-04</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">yesterday</td>
+      <td class="cluster"><span class="badge b2">NPA</span></td>
+      <td class="notes">NPA series</td>
+    </tr>
+
+    <tr data-c="2" data-name="npa-03">
+      <td class="num">8</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/npa-03" target="_blank">npa-03</a>
+        <span class="slug">ukubona-llc.github.io/npa-03</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">yesterday</td>
+      <td class="cluster"><span class="badge b2">NPA</span></td>
+      <td class="notes">Uganda Digital Twin · 146 districts · Board briefing demo</td>
+    </tr>
+
+    <tr data-c="2" data-name="npa-02">
+      <td class="num">9</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/npa-02" target="_blank">npa-02</a>
+        <span class="slug">ukubona-llc.github.io/npa-02</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">yesterday</td>
+      <td class="cluster"><span class="badge b2">NPA</span></td>
+      <td class="notes">NPA series</td>
+    </tr>
+
+    <tr data-c="2" data-name="npa-01">
+      <td class="num">10</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/npa-01" target="_blank">npa-01</a>
+        <span class="slug">ukubona-llc.github.io/npa-01</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">yesterday</td>
+      <td class="cluster"><span class="badge b2">NPA</span></td>
+      <td class="notes">NPA series</td>
+    </tr>
+
+    <tr data-c="2" data-name="npa-00">
+      <td class="num">11</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/npa-00" target="_blank">npa-00</a>
+        <span class="slug">ukubona-llc.github.io/npa-00</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">yesterday</td>
+      <td class="cluster"><span class="badge b2">NPA</span></td>
+      <td class="notes">NPA base — root of the policy engine stack</td>
+    </tr>
+
+    <tr data-c="3" data-name="debbie-concept">
+      <td class="num">12</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/debbie-concept" target="_blank">debbie-concept</a>
+        <span class="slug">ukubona-llc.github.io/debbie-concept</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">yesterday</td>
+      <td class="cluster"><span class="badge b3">Conceptual</span></td>
+      <td class="notes">Conceptual framework — the theoretical substrate</td>
+    </tr>
+
+    <tr data-c="1" data-name="who-reviews">
+      <td class="num">13</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/who-reviews" target="_blank">who-reviews</a>
+        <span class="slug">ukubona-llc.github.io/who-reviews</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">3 days ago</td>
+      <td class="cluster"><span class="badge b1">Health</span></td>
+      <td class="notes">WHO reviews — evidence synthesis layer</td>
+    </tr>
+
+    <tr data-c="1" data-name="who-i">
+      <td class="num">14</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/who-i" target="_blank">who-i</a>
+        <span class="slug">ukubona-llc.github.io/who-i</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">4 days ago</td>
+      <td class="cluster"><span class="badge b1">Health</span></td>
+      <td class="notes">WHO identity — institutional positioning</td>
+    </tr>
+
+    <tr data-c="3" data-name="ppt">
+      <td class="num">15</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/ppt" target="_blank">ppt</a>
+        <span class="slug">ukubona-llc.github.io/ppt</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">5 days ago</td>
+      <td class="cluster"><span class="badge b3">Conceptual</span></td>
+      <td class="notes">Presentations — the pitch surface</td>
+    </tr>
+
+    <tr data-c="3" data-name="narrative">
+      <td class="num">16</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/narrative" target="_blank">narrative</a>
+        <span class="slug">ukubona-llc.github.io/narrative</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">5 days ago</td>
+      <td class="cluster"><span class="badge b3">Conceptual</span></td>
+      <td class="notes">Narrative framework — the eigenmode layer</td>
+    </tr>
+
+    <tr data-c="4" data-name="ledger">
+      <td class="num">17</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/ledger" target="_blank">ledger</a>
+        <span class="slug">ukubona-llc.github.io/ledger</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">last week</td>
+      <td class="cluster"><span class="badge b4">Infra</span></td>
+      <td class="notes">Ledger / accounting — financial twin substrate</td>
+    </tr>
+
+    <tr data-c="3" data-name="physics">
+      <td class="num">18</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/physics" target="_blank">physics</a>
+        <span class="slug">ukubona-llc.github.io/physics</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">last week</td>
+      <td class="cluster"><span class="badge b3">Conceptual</span></td>
+      <td class="notes">Physics concepts — the mathematical substrate</td>
+    </tr>
+
+    <tr data-c="4" data-name="ucu">
+      <td class="num">19</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/ucu" target="_blank">ucu</a>
+        <span class="slug">ukubona-llc.github.io/ucu</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">last week</td>
+      <td class="cluster"><span class="badge b4">Infra</span></td>
+      <td class="notes">Uganda Christian University — civilizational L₅ node</td>
+    </tr>
+
+    <tr data-c="1" data-name="renal-atlas">
+      <td class="num">20</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/renal-atlas" target="_blank">renal-atlas</a>
+        <span class="slug">ukubona-llc.github.io/renal-atlas</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">last week</td>
+      <td class="cluster"><span class="badge b1">Health</span></td>
+      <td class="notes">Renal mapping — clinical tensor, transplant substrate</td>
+    </tr>
+
+    <tr data-c="3" data-name="amaani">
+      <td class="num">21</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/amaani" target="_blank">amaani</a>
+        <span class="slug">ukubona-llc.github.io/amaani</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">last week</td>
+      <td class="cluster"><span class="badge b3">Conceptual</span></td>
+      <td class="notes">Thematic / philosophical — Amaani (trust/peace)</td>
+    </tr>
+
+    <tr data-c="4" data-name="calendar">
+      <td class="num">22</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/calendar" target="_blank">calendar</a>
+        <span class="slug">ukubona-llc.github.io/calendar</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">last week</td>
+      <td class="cluster"><span class="badge b4">Infra</span></td>
+      <td class="notes">Scheduling — temporal coordination layer</td>
+    </tr>
+
+    <tr data-c="4" data-name="ukubona-llc.github.io">
+      <td class="num">23</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/" target="_blank">ukubona-llc.github.io</a>
+        <span class="slug">ukubona-llc.github.io (root)</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">last week</td>
+      <td class="cluster"><span class="badge b4">Infra</span></td>
+      <td class="notes">Main GitHub Pages site — the public face</td>
+    </tr>
+
+    <tr data-c="4" data-name="landscape">
+      <td class="num">24</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/landscape" target="_blank">landscape</a>
+        <span class="slug">ukubona-llc.github.io/landscape</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">last week</td>
+      <td class="cluster"><span class="badge b4">Infra</span></td>
+      <td class="notes">System landscape — the map before the twin</td>
+    </tr>
+
+    <tr data-c="2" data-name="npa-demo">
+      <td class="num">25</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/npa-demo" target="_blank">npa-demo</a>
+        <span class="slug">ukubona-llc.github.io/npa-demo</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">last week</td>
+      <td class="cluster"><span class="badge b2">NPA</span></td>
+      <td class="notes">Demo version — the live pitch artefact</td>
+    </tr>
+
+    <tr data-c="3" data-name="debbie">
+      <td class="num">26</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/debbie" target="_blank">debbie</a>
+        <span class="slug">ukubona-llc.github.io/debbie</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">2 weeks ago</td>
+      <td class="cluster"><span class="badge b3">Conceptual</span></td>
+      <td class="notes">Debbie framework — household / kin-network layer</td>
+    </tr>
+
+    <tr data-c="5" data-name="repos-00">
+      <td class="num">27</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/repos-00" target="_blank">repos-00</a>
+        <span class="slug">ukubona-llc.github.io/repos-00</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">2 weeks ago</td>
+      <td class="cluster"><span class="badge b5">Meta</span></td>
+      <td class="notes">Base repo collection — scaffolding layer</td>
+    </tr>
+
+    <tr data-c="5" data-name="ml-sm">
+      <td class="num">28</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/ml-sm" target="_blank">ml-sm</a>
+        <span class="slug">ukubona-llc.github.io/ml-sm</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">Feb 16</td>
+      <td class="cluster"><span class="badge b5">Meta</span></td>
+      <td class="notes">Machine learning (small models?) — experimental substrate</td>
+    </tr>
+
+    <tr data-c="5" data-name="source-code">
+      <td class="num">29</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/source-code" target="_blank">source-code</a>
+        <span class="slug">ukubona-llc.github.io/source-code</span>
+      </td>
+      <td class="lang">—</td>
+      <td class="updated">Jan 31</td>
+      <td class="cluster"><span class="badge b5">Meta</span></td>
+      <td class="notes">General codebase — the raw execution layer</td>
+    </tr>
+
+    <tr data-c="3" data-name="sgd-theology">
+      <td class="num">30</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/sgd-theology" target="_blank">sgd-theology</a>
+        <span class="slug">ukubona-llc.github.io/sgd-theology</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">Jan 30</td>
+      <td class="cluster"><span class="badge b3">Conceptual</span></td>
+      <td class="notes">Theology / SGD framing — the epistemic prior (Kiti kya Muwogo layer)</td>
+    </tr>
+
+    <tr data-c="5" data-name="y26m01d28">
+      <td class="num">31</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/y26m01d28" target="_blank">y26m01d28</a>
+        <span class="slug">ukubona-llc.github.io/y26m01d28</span>
+      </td>
+      <td class="lang">—</td>
+      <td class="updated">Jan 29</td>
+      <td class="cluster"><span class="badge b5">Meta</span></td>
+      <td class="notes">Timestamped project — snapshot / versioned experiment</td>
+    </tr>
+
+    <tr data-c="5" data-name="sham-00">
+      <td class="num">32</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/sham-00" target="_blank">sham-00</a>
+        <span class="slug">ukubona-llc.github.io/sham-00</span>
+      </td>
+      <td class="lang">—</td>
+      <td class="updated">Jan 28</td>
+      <td class="cluster"><span class="badge b5">Meta</span></td>
+      <td class="notes">Experimental — sandbox / throwaway prototype</td>
+    </tr>
+
+    <tr data-c="5" data-name="repo-01">
+      <td class="num">33</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/repo-01" target="_blank">repo-01</a>
+        <span class="slug">ukubona-llc.github.io/repo-01</span>
+      </td>
+      <td class="lang">HTML</td>
+      <td class="updated">Jan 28</td>
+      <td class="cluster"><span class="badge b5">Meta</span></td>
+      <td class="notes">Repo series — numbered scaffolding</td>
+    </tr>
+
+    <tr data-c="3" data-name="la-distincion">
+      <td class="num">34</td>
+      <td class="name">
+        <a href="https://ukubona-llc.github.io/la-distincion" target="_blank">la-distincion</a>
+        <span class="slug">ukubona-llc.github.io/la-distincion</span>
+      </td>
+      <td class="lang">—</td>
+      <td class="updated">Dec 13, 2025</td>
+      <td class="cluster"><span class="badge b3">Conceptual</span></td>
+      <td class="notes">Einstein–Hassabis triad — the conceptual origin of the distinction argument</td>
+    </tr>
+
+  </tbody>
+</table>
+</div>
+
+<!-- ── INSIGHT PANELS (ChatGPT observations, preserved) ── -->
+<div class="slabel">Structural Observations · Pattern Read</div>
+
+<div class="insights">
+
+  <div class="insight-card highlight">
+    <h3>⚡ HTML Dominance</h3>
+    <p>
+      This is a <em>publishing-first architecture</em>, not backend-first.
+      Almost every repo is HTML — the interface and narrative are the primary
+      deliverable. <strong>Private repos hold the execution layer.</strong>
+      Public repos = interface + narrative + legitimacy.
+    </p>
+  </div>
+
+  <div class="insight-card">
+    <h3>⏱ Temporal Clustering</h3>
+    <p>
+      The "yesterday" cluster (npa-00 → npa-05 + debbie-concept) reveals a
+      <strong>batch-release pattern</strong> — conceptual layers are developed
+      in rapid bursts, not drip-fed. This is how the NPA spine grew.
+    </p>
+  </div>
+
+  <div class="insight-card">
+    <h3>🏛️ NPA Stack is the Spine</h3>
+    <p>
+      Six NPA repos (00 → 05) plus the demo form the central policy engine.
+      <strong>Everything else orbits it.</strong>
+      The NPA stack is the proof-of-concept the entire architecture was
+      built to justify.
+    </p>
+  </div>
+
+  <div class="insight-card">
+    <h3>🔒 Private Repos = Execution</h3>
+    <p>
+      The public/private split is deliberate and architectural.
+      Public repos do legitimacy and narrative.
+      <strong>Private repos hold twins, pipelines, and internal logic.</strong>
+      The interface is open; the engine is sovereign.
+    </p>
+  </div>
+
+  <div class="insight-card">
+    <h3>5 Clusters Emerging</h3>
+    <p>
+      Health + Clinical · NPA / Policy · Conceptual / Narrative ·
+      Infra / Twin / Ops · Meta / Experimental.
+      <strong>Five clusters mapping cleanly onto the pentadic L₁–L₅ structure.</strong>
+      This is not accidental. The repo ecosystem <em>is</em> the OS.
+    </p>
+  </div>
+
+  <div class="insight-card">
+    <h3>📊 Strategic vs Scaffolding</h3>
+    <p>
+      Highest strategic weight: <strong>hmis, npa-03, npa-demo, ckd, renal-atlas,
+      sgd-theology, la-distincion.</strong>
+      Pure scaffolding: repos-00, repo-01, sham-00, y26m01d28, source-code.
+      The conceptual layer (narrative, physics, sgd-theology) is underrated —
+      it is the <em>epistemic prior</em> the whole OS runs on.
+    </p>
+  </div>
+
+</div>
+
+<footer>
+  <div class="fl"><em>Ukubona</em> · to see · Digital Twin OS · Kampala · Baltimore</div>
+  <div class="fr">34 public repos · ukubona-llc.github.io · 2025–2026</div>
+</footer>
+
+<script>
+  let activeCluster = 0;
+
+  function filter(c) {
+    activeCluster = c;
+    const rows = document.querySelectorAll('#repo-table tbody tr');
+    const search = document.getElementById('search').value.toLowerCase();
+    rows.forEach(row => {
+      const matchCluster = (c === 0) || (parseInt(row.dataset.c) === c);
+      const matchSearch = !search || row.dataset.name.includes(search) ||
+                          row.querySelector('.notes').textContent.toLowerCase().includes(search);
+      row.classList.toggle('hidden', !(matchCluster && matchSearch));
+    });
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.dataset.c) === c);
+    });
+  }
+
+  function searchRepos() {
+    filter(activeCluster);
+  }
+</script>
+</body>
+</html>
